@@ -1,0 +1,47 @@
+version: '3.3'
+services:
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
+    volumes:
+    - ./data:/var/www/html
+    ports:
+      - '8080:80'
+    links:
+      - php
+    depends_on:
+      - php
+    networks:
+      - internal
+  php:
+    image: php:8.0-fpm
+    volumes:           
+      - ./data:/var/www/html
+    networks:
+      - internal
+    healthcheck:
+      test: curl --fail http://localhost || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 5
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: mydatabase
+      MYSQL_USER: myuser
+      MYSQL_PASSWORD: mypassword
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+volumes:
+  mysql_data:
+networks:
+  internal:
+    driver: bridge
