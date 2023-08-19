@@ -1,0 +1,39 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [14.x]
+
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+
+      - name: setup node
+        uses: actions/setup-node@master
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      # install applicaion dependencies
+      - name: Install dependencies
+        run: |
+          npm install
+          npm ci
+        working-directory: ./Docker/multistage/app
+      # build and test the apps     
+      - name: build
+        run: |
+          npm run build
+          npm run test
+        working-directory: ./Docker/multistage/app
+    
