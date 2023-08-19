@@ -8,17 +8,28 @@ variable "ubuntu_ami" {
   }
 }
 
-variable "server-ec2" {
+variable "servers_ec2" {
   description = "Mapa de servidores con su correspondiente AZ"
 
-  type = map(string)
+  type = map(object({
+    name = string,
+    az     = string
+    })
+  )
 
   default = {
-    name = "server-1",
-    az   = "a"
+    "ser-1" = { name = "servidor-1", az = "a" },
+    "ser-2" = { name = "servidor-2", az = "b" },
   }
 
 }
 
+variable "ip_allow" {
+  description = "IP restricted ingress"
+  type        = list(string)
+}
+
 variable "region" {}
 variable "instance_type" {}
+variable "port_lb" {}
+variable "server_port" {}

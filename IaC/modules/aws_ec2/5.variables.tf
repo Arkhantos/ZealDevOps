@@ -21,10 +21,14 @@ variable "instance_type" {
   default     = "t3a.micro"
 }
 
-variable "server-ec2" {
+variable "servers_ec2" {
   description = "Server Map with its corresponding public subnet"
 
-  type = map(string)
+  type = map(object({
+    name      = string,
+    subnet_id = string
+    })
+  )
 }
 
 variable "iam_role" {

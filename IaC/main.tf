@@ -25,13 +25,21 @@ data "aws_vpc" "vpc-default" {
   default = true
 }
 
+data "aws_subnets" "all_subnets" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.vpc-default.id]
+  }
+}
+
 data "aws_subnet" "public_subnet" {
-  availability_zone = "${local.region}${var.server-ec2["az"]}"
+  for_each          = var.servers_ec2
+  availability_zone = "${local.region}${each.value.az}"
   vpc_id            = data.aws_vpc.vpc-default.id
 }
 
 # ------------------------------------
-# EC2
+# EC2 module
 # ------------------------------------
 module "ec2-instance" {
   source = "./modules/aws_ec2"
@@ -39,9 +47,23 @@ module "ec2-instance" {
   env           = "dev"
   instance_type = var.instance_type
   ami_id        = var.ubuntu_ami[local.region]
-  server-ec2 = {
-    name      = var.server-ec2["name"],
-    subnet_id = data.aws_subnet.public_subnet.id
+  servers_ec2 = {
+    for id_ser, info in var.servers_ec2 :
+    id_ser => { name = info.name, subnet_id = data.aws_subnet.public_subnet[id_ser].id }
   }
 }
 
+# ------------------------------------
+# ALB module
+# ------------------------------------
+module "load_balancer" {
+  source = "./modules/aws_alb"
+
+  subnet_ids     = data.aws_subnets.all_subnets.ids
+  instance_ids   = module.ec2-instance.ec2_instance_ids
+  vpc_default_id = data.aws_vpc.vpc-default.id
+  port_lb        = var.port_lb
+  server_port    = var.server_port
+  env            = "dev"
+  ip_allow       = var.ip_allow
+}
