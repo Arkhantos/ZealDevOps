@@ -52,3 +52,4 @@ jobs:
           file: ./Docker/multistage/app/Dockerfile
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/nodejs-demo:latest
+          target: 'production'
