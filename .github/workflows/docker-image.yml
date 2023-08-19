@@ -22,6 +22,7 @@ jobs:
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
         with:
+          phrase: '[skip-workflow]'
           node-version: ${{ matrix.node-version }}
 
       # install applicaion dependencies
@@ -32,8 +33,22 @@ jobs:
         working-directory: ./Docker/multistage/app
       # build and test the apps     
       - name: build
+        if: ${{ !steps.skip-workflow.outputs.skip }}
         run: |
           npm run build --if-present
           npm run test
         working-directory: ./Docker/multistage/app
-    
+        
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: ./Docker/multistage/app
+          file: ./Docker/multistage/app/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/nodejs-demo:latest
